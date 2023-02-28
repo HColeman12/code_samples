@@ -1,0 +1,72 @@
+﻿#!/usr/bin/perl
+
+################################################################################################################################################
+#This script takes n number of files as arguments, and
+#converts the date format used in the file of dd/mm/yyyy to mm/dd/yyyy and outputs
+#the edited record into a new file called Adjusted_time.txt. The input files are colon separated and formatted as:
+#last_name:first_name:country:date
+#This script could be used, 
+#for example, to convert the date formats for certain customers before sending them an invoice.
+#Say you have two files named first.txt and second.txt, you would run the program as: perl eu_to_us_date_conversion.pl first.txt second.txt
+
+#Author: Hunter Coleman
+###################################################################################################################################################
+
+$numArgs = $#ARGV + 1;
+
+
+$outfile = "Americanized_date.txt";
+if (-e $outfile){
+        unlink $outfile;
+}
+
+
+foreach $arg (@ARGV){
+        #print $arg, "\n";
+}
+if ($numArgs == 0){
+        print "You must have at least one file as an argument.\n";
+}
+else{
+        foreach $arg (@ARGV){
+                if(-r $arg){
+                        my $filename = $arg;
+                        open(my $fh, '<:encoding(UTF-8)',$filename)
+                                or die "could not open file '$filename' $!";
+                        while (my $row = <$fh>){
+                                chomp $row;
+                                my ($lastname, $firstname, $country, $date) = split /:/, $row;
+                                if (($country eq "USA")||($country eq 'CAN')||($country eq "PN")){
+                                        #change the date
+                                        my ($day,$month,$year) = split /\//,$date;
+
+
+                                        my ($lastname, $firstname,$country,$americandate) = split /:/,$row;
+                                        my $newfile = 'Americanized_date.txt';
+                                        open(FH,'>>',$newfile) or die $!;
+                                        print FH "$lastname".":"."$firstname".":"."$country".":"."$month"."/"."$day"."/"."$year\n";
+                                        close(FH);
+                                        }
+                        }
+                        print "Success for file ".$arg."\n";
+                }
+
+
+
+
+                else{
+                        print "The file ".$arg." is not a readable file\n";
+                        }
+        }
+}
+
+
+
+
+#sort the converted data
+open(FHH,'<','Americanized_date.txt') or die $!;
+open(OFHH,'>','Adjusted_time.txt') or die $!;
+print OFHH sort <FHH>;
+close(FHH);
+close(OFHH);
+unlink $outfile; #remove temp file Americanized_date.txt
