@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# This script is a stand-in for the Linux rm command. It adds a safety net to protect
+# users from accidently deleting a file by accident. 
+# IMPORTANT
+# A cron job should be used in conjunction with this script to avoid the potential
+# of the system running out of memory.
+
+
+saveddir="$HOME/.saved_deletes"
+realremove="$(which rm)"
+copy="$(which cp) -R"
+
+
+# if nothing is listed to remove, then let rm handle the error message
+if [ $# -eq 0 ] ; then
+   exec $realremove
+fi
+
+
+flags=""
+
+while getopts "dfiPRrvW" option
+do
+	case $option in
+		f ) exec $realremove "$@" ;;  # let realremove handle things if f option is chosen
+		* ) flags="$flags -$option" ;;
+	       esac
+       done
+       shift $(( $OPTIND -1 ))
+
+
+if [ ! -d $saveddir ] ; then
+	if [ ! -w $HOME ] ; then
+		echo "$0 failed: can't create $saveddir in $HOME"
+		exit 1
+	fi
+	mkdir $saveddir
+	chmod 700 $saveddir
+fi
+
+for arg
+do
+	changed_name="$saveddir/$(date "+%m.%d.%H.%M").$(basename "$arg")"
+	if [ -f "$arg" -o -d "$arg" ] ; then
+		$copy "$arg" "$changed_name"
+	fi
+done
+
+exec $realremove $flags "$@"
