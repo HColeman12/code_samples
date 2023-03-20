@@ -57,7 +57,7 @@ else:
 with open("update_project.txt", "w") as f:
     if cur_month and cur_month.strip():
         f.write(f"UPDATE OC1B SET {table_date_1} = {cur_month} where table_id = 6 and geo = \"united states\";\n")
-    f.write(f"UPDATE OC1B SET {table_date_2} = {prev_month} where table_id = 6 and geo = \"united states\";")
+        f.write(f"UPDATE OC1B SET {table_date_2} = {prev_month} where table_id = 6 and geo = \"united states\";")
 
     
                     
