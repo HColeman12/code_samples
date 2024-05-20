@@ -14,6 +14,8 @@ lookup_a = []
 lookup_b = []
 runner = []
 
+correct_file_format = False
+
 Tk().withdraw() # Don't need the full tkinter GUI
 filename = askopenfilename() 
 print(f"Selected file: {filename}")
@@ -36,7 +38,6 @@ def format_timestamp(ts):
 query = input("Enter your search query: ")
 
 
-correct_file_format = False
 
 with open(filename, "r") as f:
     regex_pattern = '(^\d+)\s+(\d+)\s+(.+)$'
