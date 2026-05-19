@@ -1,7 +1,7 @@
 #include <stdio.h> 
 
-// Function that returns the index of the 
-// day for date DD/MM/YYYY 
+// returns the index of the day for date DD/MM/YYYY
+// Tomohiko Sakamoto's algorithm
 int dayNumber(int day, int month, int year) 
 { 
 
