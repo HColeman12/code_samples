@@ -6,7 +6,22 @@
 void
 display_usage ()
 {
-  printf ("Usage panel will go here\n");
+   const char *usage = "Usage: [Program Name] [Options]\n\n";
+    const char *header = "Options:\n";
+    /* width of left column (option names) */
+    const int optw = 20;
+    const char *fmt = "%-20s-%s\n"; /* left-align option column */
+
+    printf("\n ------------------------------------\n");
+    printf("%s%s", usage, header);
+    printf("%-20s-%s","-h, --help", "Displays this menu\n");
+    printf(fmt, "None", "Displays calendar for current year");
+    printf(fmt, "[-y] year", "Displays calendar for specified year");
+    printf(fmt, "month_name [year]", "Displays calendar for specified month");
+    printf(fmt, "-dow YYYY-MM-DD", "Displays day name of the specified date (TBD)");
+    printf(fmt, "-until YYYY-MM-DD", "Displays number of days until specified date (TBD)");
+
+    printf(" ------------------------------------\n");
 }
 
 // Tomohiko Sakamoto's algorithm
