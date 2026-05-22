@@ -2,11 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-void
-display_usage ()
+#include <ctype.h>
+/*
+void display_usage ()
 {
-   const char *usage = "Usage: [Program Name] [Options]\n\n";
+  printf("Usage: [Program Name] [Options]\n");
+  printf("Options\n");
+  printf("-h, --help   Displays this menu\n");
+  printf("None    Displays calendar for current year\n");
+  printf("[-y] year    Displays calendar for specified year\n");
+  printf("month name [year]    Displays calendar for specified month\n");
+  printf("-dow [YYYY-MM-DD]      Displays dayname of the specified date, or current day if none specified. \n");
+  printf("-until YYYY-MM-DD    Displays numbers of days until specified date. TBD\n");
+}
+*/
+void display_usage(void)
+{
+    const char *usage = "Usage: [Program Name] [Options]\n\n";
     const char *header = "Options:\n";
     /* width of left column (option names) */
     const int optw = 20;
@@ -14,15 +26,51 @@ display_usage ()
 
     printf("\n ------------------------------------\n");
     printf("%s%s", usage, header);
-    printf("%-20s-%s","-h, --help", "Displays this menu\n");
+   printf("%-20s-%s","-h, --help", "Displays this menu\n");
     printf(fmt, "None", "Displays calendar for current year");
-    printf(fmt, "[-y] year", "Displays calendar for specified year");
+    
+    printf(fmt, "[-y] year", "Displays calendar for specified year (between 1800 and 3000)");
     printf(fmt, "month_name [year]", "Displays calendar for specified month");
-    printf(fmt, "-dow YYYY-MM-DD", "Displays day name of the specified date (TBD)");
+    printf(fmt, "-dow [YYYY-MM-DD]", "Displays day name of the specified date, or current day if no date is specified.");
     printf(fmt, "-until YYYY-MM-DD", "Displays number of days until specified date (TBD)");
-
+   
     printf(" ------------------------------------\n");
 }
+
+
+int get_dow(int year, int month, int day){
+if (month < 3) {
+month += 12;
+year -= 1;
+}
+int k = year % 100; // Year within the century
+int j = year / 100; // Century
+int dayOfWeek = (day + (13 * (month + 1)) / 5 + k + (k / 4) + (j / 4) - (2 * j)) % 7;
+return (dayOfWeek + 7) % 7; // Ensure non-negative result
+
+}// end of get_dow function
+
+int check_user_date_format(char *the_date){
+	//printf("users date is %s\n",the_date);
+	if (strlen(the_date) != 10){
+		printf("Date format should be YYYY-MM-DD\n");
+		return 0;
+		}
+	return isdigit((unsigned char)the_date[0]) &&
+           isdigit((unsigned char)the_date[1]) &&
+           isdigit((unsigned char)the_date[2]) &&
+           isdigit((unsigned char)the_date[3]) &&
+           the_date[4] == '-' &&
+           isdigit((unsigned char)the_date[5]) &&
+           isdigit((unsigned char)the_date[6]) &&
+           the_date[7] == '-' &&
+           isdigit((unsigned char)the_date[8]) &&
+           isdigit((unsigned char)the_date[9]);
+//	return 0;
+}
+
+
+
 
 // Tomohiko Sakamoto's algorithm
 // returns the index of the
@@ -216,15 +264,19 @@ printCalendar (int year, int month_start, int month_stop)
   return;
 }
 
-int
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-  // Getting the current year
+  // Getting the current year month and day
   time_t current_time = time (NULL);
   // convert to local time
   struct tm *local_time = localtime (&current_time);
   int year = local_time->tm_year + 1900;
-  // int year = 2026;
+  int month = local_time->tm_mon + 1;
+  int day = local_time->tm_mday; 
+
+   // printf("Month: %02d\n", local_time->tm_mon + 1);  // Two‑digit month
+    //printf("Day:   %02d\n", local_time->tm_mday);     // Two‑digit day
+
 
   // Check if user entered a month name as arg1 and an optional year
   int month_start = 0;
@@ -236,13 +288,69 @@ main (int argc, char *argv[])
   };
   int num_month_names = sizeof (month_names) / sizeof (month_names[0]);
 
+if (argc == 1){
+        //printf("no arguments given\n");
+	printCalendar(year, month_start, month_stop);
+	return 0;
+}
+
+
+if (argc == 2 &&
+    strcmp(argv[1], "-h") == 0 || 
+    strcmp(argv[1], "--help") == 0) {
+	  //printf("h or help was specified\n");
+	  display_usage();
+	  return 0;
+  }
+
+// If user enters -dow and a date
+// If user enters -dow but no other agrument, default to the current day
+if (argc == 2 || argc == 3){
+	const char *days[] = {"Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+  if ((strcasecmp (argv[1],"-dow") == 0) && (argc == 2)){
+	 // printf("using -dow without any other arguments\n");
+	  int day_of_week = get_dow(year,month,day);  // these are the current day variables, set above
+	  printf("%s\n",days[day_of_week]);
+	  return 0;
+  }
+  if ((strcasecmp (argv[1],"-dow") == 0) && (argc == 3)){
+	  // user entered -dow plus a date
+	  // Check that argv[2] is a properly formatted date
+	  if(check_user_date_format(argv[2])){
+	//	  printf("properly formatted date for dow\n");
+		  char *the_date_input = argv[2];
+	//	  printf("%s\n",the_date_input);
+		  //int first_year = argv[2][0] - '0';
+		  //printf("%d\n",first_year);
+                  int yy = (the_date_input[0] - '0') * 1000 +
+                           (the_date_input[1] - '0') * 100 +
+                           (the_date_input[2] - '0') * 10 +
+                           (the_date_input[3] - '0');
+		  int mm = (the_date_input[5] - '0') * 10 + (the_date_input[6] - '0');
+                  int dd = (the_date_input[8] - '0') * 10 + (the_date_input[9] - '0');
+	//	  printf("user year is %d\n",yy);
+	//	  printf("user month is %02d\n",mm);
+	//	  printf("user day is %02d\n",dd);
+	          int day_of_week = get_dow(yy,mm,dd);  
+	          printf("%s\n",days[day_of_week]);
+		  return 0;
+
+
+	}
+	  else{
+	  return 1;
+	  }
+  }
+}
+
+
   if (argc > 1)
     {
       for (int i = 0; i < num_month_names; i++)
         {
           if (strcasecmp (argv[1], month_names[i]) == 0)
             {
-              printf ("a month name was entered\n");
+           //   printf ("a month name was entered\n");
               month_start = i;
               month_stop = i + 1;
               // In addition to a month name, did they also enter a year
@@ -250,17 +358,23 @@ main (int argc, char *argv[])
                   && atoi (argv[2]) <= 3000)
                 {
                   year = atoi (argv[2]);
-                  printf ("a month and a year was entered\n");
+                //  printf ("a month and a year was entered\n");
                 }
 
               printCalendar (year, month_start, month_stop);
               // break;
+	      return 0;
             }
         }
-
+// HUNTER below line =is not working. 
+      /*
+if (argc > 1 &&
+    strcmp(argv[1], "-h") != 0 &&
+    strcmp(argv[1], "--help") != 0) {
+    */
       for (int i = 1; i < argc; i++)
         {
-          if (strcmp (argv[i], "-y") == 0 && i + 1 < argc)
+          if ((strcmp (argv[i], "-y") == 0 && i + 1 < argc) && (atoi (argv[i+1]) >= 1900 && atoi (argv[i+1]) <= 3000 ))
             {
               year = atoi (argv[++i]);
             }
@@ -275,9 +389,14 @@ main (int argc, char *argv[])
               return 1;
             }
         }
+        //}
     }
+  else {
+	printCalendar(year, month_start, month_stop);
+  }	
 
-  printf ("the year is %d\n", year);
+//  printf ("the year is %d\n", year);
   printCalendar (year, month_start, month_stop);
   return 0;
 }
+
