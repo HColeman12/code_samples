@@ -288,6 +288,9 @@ int main (int argc, char *argv[])
   };
   int num_month_names = sizeof (month_names) / sizeof (month_names[0]);
 
+const char *holiday_names[] = {
+         "Christmas", "Memorial Day", "Easter", "Labor Day", "Chanuka"
+ };
 if (argc == 1){
         //printf("no arguments given\n");
 	printCalendar(year, month_start, month_stop);
