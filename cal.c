@@ -289,57 +289,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc == 3) {
-      // HC maybe add another IF at top, check if argv[1] is a english month
-      // name, if so, user is trying to get calendar for a specific month. Don't
-      // need to check_user_date_format
-      /*  hunter
-      static const char *months_full[12] = {
-          "January","February","March","April","May","June",
-          "July","August","September","October","November","December"
-      };
-
-      static const char *months_abbrev[12] = {
-          "Jan","Feb","Mar","Apr","May","Jun",
-          "Jul","Aug","Sep","Oct","Nov","Dec"
-      };
-      hunter  */
-      /* Case-insensitive string compare */
-      /*  hunter
-      int stricmp(const char *a, const char *b) {
-          for (; *a && *b; ++a, ++b) {
-              int ca = tolower((unsigned char)*a);
-              int cb = tolower((unsigned char)*b);
-              if (ca != cb) return ca - cb;
-          }
-          return (unsigned char)*a - (unsigned char)*b;
-      }
-
-      const char *input = argv[1];
-          int i;
-      hunter */
-      /* Check full names */
-      /*  hunter
-          for (i = 0; i < 12; ++i) {
-              if (stricmp(input, months_full[i]) == 0) {
-                  printf("Matched full month: %s (index %d)\n", months_full[i],
-      i + 1); return 0;
-              }
-          }
-      hunter  */
-      /* Check 3-letter abbreviations */
-      /*  hunter
-          for (i = 0; i < 12; ++i) {
-              if (stricmp(input, months_abbrev[i]) == 0) {
-                  printf("Matched abbreviation: %s (full name: %s, index %d)\n",
-                         months_abbrev[i], months_full[i], i + 1);
-                  return 0;
-              }
-          }
-
-
-
-
-      */
 
       // Check that argv[2] is a properly formatted date
       if (check_user_date_format(argv[2])) {
