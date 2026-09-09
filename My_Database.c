@@ -308,6 +308,46 @@ ExecuteResult execute_statement(Statement* statement, Table *table) {
 	       	}
        	}
 
+//////
+#define ORDER 4 //max num of children for internal nodes
+
+typedef struct Node {
+        bool is_leaf;
+        int num_keys;
+        int keys[ORDER - 1];
+        union {
+                //Internal nodes Point to child nodes (ORDER number of pointers)
+                struct Node* children[ORDER];
+                struct {
+                        //leaf nodes poini to actual records
+                        void* records[ORDER - 1];
+                        // linked list for fast range queries
+                        struct Node* next;
+                };
+        };
+} Node;
+
+// dynamically allocate and zero out new nodes before insertion
+Node* create_node(bool is_leaf) {
+        Node* node = (Node*)malloc(sizeof(Node));
+        if (!node) {
+                perror("Unable to allocate node memory");
+                exit(EXIT_FAILURE);
+        }
+        node->is_leaf = is_leaf;
+        node->num_keys = 0;
+
+        if (is_leaf) {
+                node->next = NULL;
+        } else {
+                for (int i = 0; i < ORDER; i++) {
+                        node->children[i] = NULL;
+                }
+        }
+        return node;
+}
+
+
 int main(int argc, char* argv[]) { 
 	Table* table = new_table();
 	InputBuffer* input_buffer = new_input_buffer();
