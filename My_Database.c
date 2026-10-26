@@ -86,6 +86,12 @@ typedef struct
   Pager *pager;
 } Table;
 
+typedef struct{
+  Table* table;
+  uint32_t row_num;
+  bool end_of_table; //indicates a position of one past the last element
+} Cursor;
+
 void
 print_row (Row *row)
 {
