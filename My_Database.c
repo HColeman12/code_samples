@@ -86,10 +86,11 @@ typedef struct
   Pager *pager;
 } Table;
 
-typedef struct{
-  Table* table;
+typedef struct
+{
+  Table *table;
   uint32_t row_num;
-  bool end_of_table; //indicates a position of one past the last element
+  bool end_of_table; // Indicates a position one past the last element
 } Cursor;
 
 void
@@ -154,19 +155,48 @@ get_page (Pager *pager, uint32_t page_num)
   return pager->pages[page_num];
 }
 
-void *
-row_slot (Table *table, uint32_t row_num)
+
+Cursor *
+table_start (Table *table)
 {
+  Cursor *cursor = malloc (sizeof (Cursor));
+  cursor->table = table;
+  cursor->row_num = 0;
+  cursor->end_of_table = (table->num_rows == 0);
+
+  return cursor;
+}
+
+Cursor *
+table_end (Table *table)
+{
+  Cursor *cursor = malloc (sizeof (Cursor));
+  cursor->table = table;
+  cursor->row_num = table->num_rows;
+  cursor->end_of_table = true;
+
+  return cursor;
+}
+
+void *
+cursor_value (Cursor *cursor)
+{
+  uint32_t row_num = cursor->row_num;
   uint32_t page_num = row_num / ROWS_PER_PAGE;
-  //	void *page = table->pages[page_num];
-  //	if (page == NULL){
-  //		//Allocate memory only when we try to access page
-  //		page = table->pages[page_num] = malloc(PAGE_SIZE);
-  //	}
-  void *page = get_page (table->pager, page_num);
+  void *page = get_page (cursor->table->pager, page_num);
   uint32_t row_offset = row_num % ROWS_PER_PAGE;
   uint32_t byte_offset = row_offset * ROW_SIZE;
   return page + byte_offset;
+}
+
+void
+cursor_advance (Cursor *cursor)
+{
+  cursor->row_num += 1;
+  if (cursor->row_num >= cursor->table->num_rows)
+    {
+      cursor->end_of_table = true;
+    }
 }
 
 // Table* new_table() {
@@ -262,7 +292,6 @@ close_input_buffer (InputBuffer *input_buffer)
   free (input_buffer);
 }
 
-
 void
 pager_flush (Pager *pager, uint32_t page_num, uint32_t size)
 {
@@ -308,8 +337,7 @@ db_close (Table *table)
       pager->pages[i] = NULL;
     }
 
-  // There may be a partial page to write to the end of the file
-  // This should not be needed after we switch to a B-tree
+  // There may be a partial page to write to the end of the file (needed prior to getting B-tree working)
   uint32_t num_additional_rows = table->num_rows % ROWS_PER_PAGE;
   if (num_additional_rows > 0)
     {
@@ -403,8 +431,8 @@ prepare_statement (InputBuffer *input_buffer, Statement *statement)
       //		input_buffer->buffer, "insert %d %s %s",
       //		&(statement->row_to_insert.id),
       //		statement->row_to_insert.username,
-      //statement->row_to_insert.email); 		if (args_assigned < 3){ 		return
-      //PREPARE_SYNTAX_ERROR;
+      // statement->row_to_insert.email); 		if (args_assigned < 3){
+      // return PREPARE_SYNTAX_ERROR;
       //		}
 
       // return PREPARE_SUCCESS;
@@ -425,9 +453,12 @@ execute_insert (Statement *statement, Table *table)
       return EXECUTE_TABLE_FULL;
     }
   Row *row_to_insert = &(statement->row_to_insert);
+  Cursor *cursor = table_end (table);
 
-  serialize_row (row_to_insert, row_slot (table, table->num_rows));
+  serialize_row (row_to_insert, cursor_value (cursor));
+
   table->num_rows += 1;
+  free (cursor);
 
   return EXECUTE_SUCCESS;
 }
@@ -435,12 +466,23 @@ execute_insert (Statement *statement, Table *table)
 ExecuteResult
 execute_select (Statement *statement, Table *table)
 {
+  Cursor *cursor = table_start (table);
   Row row;
-  for (uint32_t i = 0; i < table->num_rows; i++)
+  // for (uint32_t i = 0; i < table->num_rows; i++)
+  // {
+  //  deserialize_row (row_slot (table, i), &row);
+  // print_row (&row);
+  //}
+
+  while (!(cursor->end_of_table))
     {
-      deserialize_row (row_slot (table, i), &row);
+      deserialize_row (cursor_value (cursor), &row);
       print_row (&row);
+      cursor_advance (cursor);
     }
+
+  free (cursor);
+
   return EXECUTE_SUCCESS;
 }
 
